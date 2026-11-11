@@ -26,11 +26,11 @@ def post_json(url, headers, payload):
                 return json.load(response)
 
         except urllib.error.HTTPError as exc:
-            if exc.code == 429:
+            if exc.code in (429, 500, 502, 503, 504):
                 print("HTTP 429")
                 print("Retry-After:", exc.headers.get("Retry-After"))
                 print("Chi tiet:", exc.read().decode("utf-8", errors="replace"))
-            if exc.code == 429:
+            if exc.code in (429, 500, 502, 503, 504):
                 if attempt == 2:
                     raise RuntimeError(
                         "Gemini HTTP 429: hết lượt thử, kiểm tra quota."
@@ -43,7 +43,7 @@ def post_json(url, headers, payload):
                     delay = 15 * (2 ** attempt)
 
                 delay = max(1, min(delay, 60))
-                print(f"HTTP 429: thử lại sau {delay:g} giây...")
+                print(f"HTTP {exc.code}: thử lại sau {delay:g} giây...")
                 time.sleep(delay)
                 continue
 
