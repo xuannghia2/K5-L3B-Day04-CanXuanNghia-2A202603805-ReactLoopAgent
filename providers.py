@@ -3,6 +3,7 @@ import json
 import os
 import urllib.error
 import urllib.request
+import time
 
 CONFIG = {
     'openai': ('OPENAI_API_KEY', 'https://api.openai.com/v1/chat/completions'),
@@ -13,15 +14,48 @@ CONFIG = {
 
 
 def post_json(url, headers, payload):
-    req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={'Content-Type': 'application/json', **headers})
-    try:
-        with urllib.request.urlopen(req, timeout=60) as response:
-            return json.load(response)
-    except urllib.error.HTTPError as exc:
-        # Do not print response bodies: they may contain account or request data.
-        raise RuntimeError(f'Provider trả HTTP {exc.code}; kiểm tra model, key và quota.') from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f'Không kết nối được provider: {exc.reason}') from exc
+    for attempt in range(3):
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json", **headers}
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=60) as response:
+                return json.load(response)
+
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429:
+                print("HTTP 429")
+                print("Retry-After:", exc.headers.get("Retry-After"))
+                print("Chi tiet:", exc.read().decode("utf-8", errors="replace"))
+            if exc.code == 429:
+                if attempt == 2:
+                    raise RuntimeError(
+                        "Gemini HTTP 429: hết lượt thử, kiểm tra quota."
+                    ) from exc
+
+                retry_after = exc.headers.get("Retry-After")
+                try:
+                    delay = float(retry_after) if retry_after else 15 * (2 ** attempt)
+                except ValueError:
+                    delay = 15 * (2 ** attempt)
+
+                delay = max(1, min(delay, 60))
+                print(f"HTTP 429: thử lại sau {delay:g} giây...")
+                time.sleep(delay)
+                continue
+
+            raise RuntimeError(
+                f"Provider trả HTTP {exc.code}; kiểm tra model, key và quota."
+            ) from exc
+
+        except urllib.error.URLError as exc:
+            raise RuntimeError(
+                f"Không kết nối được provider: {exc.reason}"
+            ) from exc
+
 
 
 class Provider:
