@@ -1,9 +1,9 @@
 # Ghi chú phân tích – Day 04: ReAct Agent Loop
 
-**Học viên:** Can Xuan Nghia 
-**MSSV:** 2A202603805 
-**Repository:** https://github.com/xuannghia2/K5-L3B-Day04-CanXuanNghia-2A202603805-ReactLoopAgent  
-**Ngày tổng hợp:** 11/11/2026
+* **Học viên:** Can Xuan Nghia
+* **MSSV:** 2A202603805
+* **Repository:** https://github.com/xuannghia2/K5-L3B-Day04-CanXuanNghia-2A202603805-ReactLoopAgent
+* **Ngày tổng hợp:** 11/11/2026
 
 ## Tóm tắt kết quả
 
